@@ -21,50 +21,146 @@
 
 .. towncrier release notes start
 
-Airflow 2.10.4 (2024-12-16)
----------------------------
+Airflow  (2025-01-31)
+---------------------
 
 Significant Changes
 ^^^^^^^^^^^^^^^^^^^
 
-TaskInstance ``priority_weight`` is capped in 32-bit signed integer ranges (#43611)
-"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+DAG Versioning
+"""""""""""""""
 
-Some database engines are limited to 32-bit integer values. As some users reported errors in
-weight rolled-over to negative values, we decided to cap the value to the 32-bit integer. Even
-if internally in python smaller or larger values to 64 bit are supported, ``priority_weight`` is
-capped and only storing values from -2147483648 to 2147483647.
+Airflow now tracks DAG versions, providing better visibility into DAG changes over time. This enables users to inspect
+historical DAG structures and execution states, ensuring tasks run with the correct code version even when DAGs evolve.
+This improves observability and reliability across workflows.
 
-Bug Fixes
-^^^^^^^^^
+Modern Web Application
+"""""""""""""""""""""""
 
-- Fix stats of dynamic mapped tasks after automatic retries of failed tasks (#44300)
-- Fix wrong display of multi-line messages in the log after filtering (#44457)
-- Allow "/" in metrics validator (#42934) (#44515)
-- Fix gantt flickering (#44488) (#44517)
-- Fix problem with inability to remove fields from Connection form (#40421) (#44442)
-- Check pool_slots on partial task import instead of execution (#39724) (#42693)
-- Avoid grouping task instance stats by try_number for dynamic mapped tasks (#44300) (#44319)
-- Re-queue task when they are stuck in queued (#43520) (#44158)
-- Suppress the warnings where we check for sensitive values (#44148) (#44167)
-- Fix get_task_instance_try_details to return appropriate schema (#43830) (#44133)
-- Log message source details are grouped (#43681) (#44070)
-- Fix duplication of Task tries in the UI (#43891) (#43950)
-- Add correct mime-type in OpenAPI spec (#43879) (#43901)
-- Disable extra links button if link is null or empty (#43844) (#43851)
-- Disable XCom list ordering by execution_date (#43680) (#43696)
-- Fix venv numpy example which needs to be 1.26 at least to be working in Python 3.12 (#43659)
-- Fix Try Selector in Mapped Tasks also on Index 0 (#43590) (#43591)
-- Prevent using ``trigger_rule="always"`` in a dynamic mapped task (#43810)
-- Prevent using ``trigger_rule=TriggerRule.ALWAYS`` in a task-generated mapping within bare tasks (#44751)
+The Airflow UI is being reimagined with a fully API-driven architecture and modern front-end technologies. This overhaul
+improves performance, maintainability, and user experience. Key enhancements include a new component-based design system
+(with dark mode), improved information architecture, and better extensibility by removing dependencies on Flask
+AppBuilder (FAB). While not included in this AIP, the foundation will also support future real-time UI capabilities.
 
-Doc Only Changes
-""""""""""""""""
-- Update XCom docs around containers/helm (#44570) (#44573)
+Expanded Data Awareness
+""""""""""""""""""""""""
 
-Miscellaneous
-"""""""""""""
-- Raise deprecation warning when accessing inlet or outlet events through str (#43922)
+Airflow is evolving to better understand the data it orchestrates. By linking tasks with their data inputs and outputs,
+Airflow can provide insights into data quality, freshness, and lineage. This enables more informed orchestration
+decisions and gives data engineers a clearer view of data reliability across workflows.
+
+Improved DAG History in UI
+"""""""""""""""""""""""""""
+
+DAGs evolve over time, making it difficult to understand how a DAG was structured when a specific run executed. Currently, Airflow's UI only displays the latest version of a DAG, with no reference to prior versions. This makes debugging and historical analysis challenging, as users lack:
+
+- A snapshot of the DAG structure at execution time
+- The exact DAG code used for that run
+- Logs for tasks that no longer exist in the current version
+
+This AIP enhances the UI to reflect past DAG runs accurately without altering execution behavior. It lays the groundwork for AIP-66, which will allow entire DAG runs to execute on a single DAG version in the future.
+
+DAG Bundles & Improved Parsing
+"""""""""""""""""""""""""""""""
+
+Currently, Airflow always runs tasks using the latest DAG code, which may not align with the DAG definition at the time of the original execution. Additionally, constant DAG file parsing consumes unnecessary resources. This AIP introduces:
+
+- DAG Bundles – Self-contained DAG definitions, including all dependencies
+- DAG Bundle Manifest – Metadata that records the structure and dependencies of a DAG bundle
+
+These changes allow:
+
+- Running tasks on the DAG code that existed at the time of execution
+- More efficient DAG parsing with better control over refresh behavior
+- Support for DAGs sourced from multiple locations
+
+Extended Plugin Interface for React Views
+""""""""""""""""""""""""""""""""""""""""""
+
+With Airflow moving to a modernized UI (AIP-38) and deprecating Flask AppBuilder (AIP-79), the existing UI extension methods will no longer be supported. This AIP introduces a flexible React-based plugin system to allow:
+
+- Custom widgets and information panels within the Grid View
+- Enhanced visibility of business-specific workflow details
+- Seamless integration of Airflow UI with external reporting tools like Grafana or Power BI
+
+This improvement bridges the gap between technical users and business stakeholders by providing a more tailored UI experience without requiring a separate custom front-end.
+
+Edge Executor (Remote Task Execution)
+""""""""""""""""""""""""""""""""""""""
+
+While Airflow supports distributed execution via CeleryExecutor, running tasks across different network environments
+(e.g., on-prem, hybrid cloud) remains complex due to database latency, firewall restrictions, and security concerns.
+
+This AIP introduces an Edge Executor, designed for remote task execution across network boundaries. It will leverage:
+
+- AIP-44 (Internal API) for decoupling workers from the metadata database
+- AIP-72 (Task SDK, future) for standardized remote task execution
+
+The Edge Executor enables seamless execution of tasks in remote environments without requiring direct database or
+message broker connections, making Airflow more scalable across diverse infrastructures.
+
+Task Execution Interface
+"""""""""""""""""""""""""
+
+- Decouples task execution from Airflow internals, reducing dependencies on the database.
+- Enables remote task execution across network boundaries.
+- Allows for multi-language support for task execution while keeping DAGs in Python.
+- Enhances security and scalability, reducing conflicts in dependency management.
+
+Asset-Centric Syntax
+"""""""""""""""""""""
+- Introduces the concept of assets (tables, ML models, reports, etc.).
+- Defines asset dependencies explicitly, making it easier to track and manage.
+- @asset decorator streamlines defining assets within DAGs.
+- Helps with understanding backfills and dependency chains more clearly.
+
+Scheduler-managed Backfill
+""""""""""""""""""""""""""
+- Moves backfill handling from a separate CLI-based process to the Airflow scheduler.
+- Allows backfills to be triggered asynchronously via API.
+- Makes backfill jobs first-class citizens, improving observability and control.
+- Eliminates redundancy in scheduling logic, simplifying Airflow 3.0 development.
+
+Remove Flask AppBuilder as Core Dependency
+"""""""""""""""""""""""""""""""""""""""""""
+
+Flask AppBuilder (FAB) has been a key part of Airflow's UI and authentication but has become more of a burden than a
+benefit. With AIP-56 making user management more flexible, Airflow no longer needs FAB as a core dependency. However,
+since FAB remains widely used for authentication and custom plugins, this AIP focuses on setting the stage for its
+eventual removal while ensuring a smooth transition for users.
+
+Enhanced Security in CLI via Integration of API
+""""""""""""""""""""""""""""""""""""""""""""""""
+
+Airflow's CLI currently interacts with the database in multiple ways, leading to security risks and inconsistencies.
+This AIP proposes integrating CLI functionality with Airflow's API to enhance security, enable built-in authentication,
+and create a standardized interface. By shifting to an API-driven model, Airflow can simplify CLI deployment, reduce
+redundancy, and improve maintainability.
+
+External Event-Driven Scheduling in Airflow
+"""""""""""""""""""""""""""""""""""""""""""
+
+Airflow primarily supports time-based and dependency-based scheduling, but modern workflows increasingly require
+real-time event-driven triggers. This AIP introduces native event-driven capabilities, allowing DAGs to be
+triggered by external events like message queues. It builds on existing dataset-based scheduling
+(now referred to as assets in AIP-73) and enhances monitoring, execution efficiency, and API support for event-based
+workflows.
+
+Rename execution_date to logical_date and Remove Unique Constraint
+"""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+
+Airflow currently uses execution_date to identify DAG runs, which introduces limitations, especially for dynamic
+workflows. This AIP proposes renaming it to logical_date and removing the unique constraint to allow for more flexible
+scheduling. This change will resolve issues like dynamically mapping TriggerDagRunOperator without requiring awkward
+workarounds, making DAG execution more intuitive and scalable.
+
+UI REST API
+""""""""""""
+
+Airflow's frontend interacts with the backend through multiple inconsistent methods, including the Public REST API,
+FAB Jinja variables, and custom endpoints. With AIP-79 aiming to remove FAB, this AIP proposes creating a standardized
+UI REST API to streamline communication between the React-based UI and the webserver. This will simplify development,
+improve maintainability, and create a more consistent user experience.
 
 
 Airflow 2.10.3 (2024-11-05)
