@@ -12,6 +12,7 @@ import {
   DagService,
   DagSourceService,
   DagStatsService,
+  DagVersionService,
   DagWarningService,
   DagsService,
   DashboardService,
@@ -737,14 +738,16 @@ export const useBackfillServiceGetBackfill = <
  * @param data.dagId
  * @param data.includeUpstream
  * @param data.includeDownstream
- * @param data.logicalDateGte
- * @param data.logicalDateLte
  * @param data.root
  * @param data.offset
  * @param data.runType
  * @param data.state
  * @param data.limit
  * @param data.orderBy
+ * @param data.runAfterGte
+ * @param data.runAfterLte
+ * @param data.logicalDateGte
+ * @param data.logicalDateLte
  * @returns GridResponse Successful Response
  * @throws ApiError
  */
@@ -763,6 +766,8 @@ export const useGridServiceGridData = <
     offset,
     orderBy,
     root,
+    runAfterGte,
+    runAfterLte,
     runType,
     state,
   }: {
@@ -775,6 +780,8 @@ export const useGridServiceGridData = <
     offset?: number;
     orderBy?: string;
     root?: string;
+    runAfterGte?: string;
+    runAfterLte?: string;
     runType?: string[];
     state?: string[];
   },
@@ -793,6 +800,8 @@ export const useGridServiceGridData = <
         offset,
         orderBy,
         root,
+        runAfterGte,
+        runAfterLte,
         runType,
         state,
       },
@@ -809,6 +818,8 @@ export const useGridServiceGridData = <
         offset,
         orderBy,
         root,
+        runAfterGte,
+        runAfterLte,
         runType,
         state,
       }) as TData,
@@ -938,6 +949,8 @@ export const useDagRunServiceGetUpstreamAssetEvents = <
  * @param data.dagId
  * @param data.limit
  * @param data.offset
+ * @param data.runAfterGte
+ * @param data.runAfterLte
  * @param data.logicalDateGte
  * @param data.logicalDateLte
  * @param data.startDateGte
@@ -965,6 +978,8 @@ export const useDagRunServiceGetDagRuns = <
     logicalDateLte,
     offset,
     orderBy,
+    runAfterGte,
+    runAfterLte,
     startDateGte,
     startDateLte,
     state,
@@ -979,6 +994,8 @@ export const useDagRunServiceGetDagRuns = <
     logicalDateLte?: string;
     offset?: number;
     orderBy?: string;
+    runAfterGte?: string;
+    runAfterLte?: string;
     startDateGte?: string;
     startDateLte?: string;
     state?: string[];
@@ -999,6 +1016,8 @@ export const useDagRunServiceGetDagRuns = <
         logicalDateLte,
         offset,
         orderBy,
+        runAfterGte,
+        runAfterLte,
         startDateGte,
         startDateLte,
         state,
@@ -1017,6 +1036,8 @@ export const useDagRunServiceGetDagRuns = <
         logicalDateLte,
         offset,
         orderBy,
+        runAfterGte,
+        runAfterLte,
         startDateGte,
         startDateLte,
         state,
@@ -2689,6 +2710,64 @@ export const useVariableServiceGetVariables = <
       queryKey,
     ),
     queryFn: () => VariableService.getVariables({ limit, offset, orderBy, variableKeyPattern }) as TData,
+    ...options,
+  });
+/**
+ * Get Dag Versions
+ * Get all DAG Versions.
+ *
+ * This endpoint allows specifying `~` as the dag_id to retrieve DAG Versions for all DAGs.
+ * @param data The data for the request.
+ * @param data.dagId
+ * @param data.limit
+ * @param data.offset
+ * @param data.versionNumber
+ * @param data.bundleName
+ * @param data.bundleVersion
+ * @param data.orderBy
+ * @returns DAGVersionCollectionResponse Successful Response
+ * @throws ApiError
+ */
+export const useDagVersionServiceGetDagVersions = <
+  TData = Common.DagVersionServiceGetDagVersionsDefaultResponse,
+  TError = unknown,
+  TQueryKey extends Array<unknown> = unknown[],
+>(
+  {
+    bundleName,
+    bundleVersion,
+    dagId,
+    limit,
+    offset,
+    orderBy,
+    versionNumber,
+  }: {
+    bundleName?: string;
+    bundleVersion?: string;
+    dagId: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+    versionNumber?: number;
+  },
+  queryKey?: TQueryKey,
+  options?: Omit<UseQueryOptions<TData, TError>, "queryKey" | "queryFn">,
+) =>
+  useQuery<TData, TError>({
+    queryKey: Common.UseDagVersionServiceGetDagVersionsKeyFn(
+      { bundleName, bundleVersion, dagId, limit, offset, orderBy, versionNumber },
+      queryKey,
+    ),
+    queryFn: () =>
+      DagVersionService.getDagVersions({
+        bundleName,
+        bundleVersion,
+        dagId,
+        limit,
+        offset,
+        orderBy,
+        versionNumber,
+      }) as TData,
     ...options,
   });
 /**

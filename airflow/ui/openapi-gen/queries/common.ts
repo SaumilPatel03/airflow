@@ -12,6 +12,7 @@ import {
   DagService,
   DagSourceService,
   DagStatsService,
+  DagVersionService,
   DagWarningService,
   DagsService,
   DashboardService,
@@ -457,6 +458,8 @@ export const UseGridServiceGridDataKeyFn = (
     offset,
     orderBy,
     root,
+    runAfterGte,
+    runAfterLte,
     runType,
     state,
   }: {
@@ -469,6 +472,8 @@ export const UseGridServiceGridDataKeyFn = (
     offset?: number;
     orderBy?: string;
     root?: string;
+    runAfterGte?: string;
+    runAfterLte?: string;
     runType?: string[];
     state?: string[];
   },
@@ -486,6 +491,8 @@ export const UseGridServiceGridDataKeyFn = (
       offset,
       orderBy,
       root,
+      runAfterGte,
+      runAfterLte,
       runType,
       state,
     },
@@ -577,6 +584,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
     logicalDateLte,
     offset,
     orderBy,
+    runAfterGte,
+    runAfterLte,
     startDateGte,
     startDateLte,
     state,
@@ -591,6 +600,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
     logicalDateLte?: string;
     offset?: number;
     orderBy?: string;
+    runAfterGte?: string;
+    runAfterLte?: string;
     startDateGte?: string;
     startDateLte?: string;
     state?: string[];
@@ -610,6 +621,8 @@ export const UseDagRunServiceGetDagRunsKeyFn = (
       logicalDateLte,
       offset,
       orderBy,
+      runAfterGte,
+      runAfterLte,
       startDateGte,
       startDateLte,
       state,
@@ -1623,6 +1636,37 @@ export const UseVariableServiceGetVariablesKeyFn = (
   } = {},
   queryKey?: Array<unknown>,
 ) => [useVariableServiceGetVariablesKey, ...(queryKey ?? [{ limit, offset, orderBy, variableKeyPattern }])];
+export type DagVersionServiceGetDagVersionsDefaultResponse = Awaited<
+  ReturnType<typeof DagVersionService.getDagVersions>
+>;
+export type DagVersionServiceGetDagVersionsQueryResult<
+  TData = DagVersionServiceGetDagVersionsDefaultResponse,
+  TError = unknown,
+> = UseQueryResult<TData, TError>;
+export const useDagVersionServiceGetDagVersionsKey = "DagVersionServiceGetDagVersions";
+export const UseDagVersionServiceGetDagVersionsKeyFn = (
+  {
+    bundleName,
+    bundleVersion,
+    dagId,
+    limit,
+    offset,
+    orderBy,
+    versionNumber,
+  }: {
+    bundleName?: string;
+    bundleVersion?: string;
+    dagId: string;
+    limit?: number;
+    offset?: number;
+    orderBy?: string;
+    versionNumber?: number;
+  },
+  queryKey?: Array<unknown>,
+) => [
+  useDagVersionServiceGetDagVersionsKey,
+  ...(queryKey ?? [{ bundleName, bundleVersion, dagId, limit, offset, orderBy, versionNumber }]),
+];
 export type MonitorServiceGetHealthDefaultResponse = Awaited<ReturnType<typeof MonitorService.getHealth>>;
 export type MonitorServiceGetHealthQueryResult<
   TData = MonitorServiceGetHealthDefaultResponse,

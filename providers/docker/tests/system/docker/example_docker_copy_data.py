@@ -29,11 +29,12 @@ from __future__ import annotations
 import os
 from datetime import datetime
 
+from docker.types import Mount
+
 from airflow import models
 from airflow.providers.docker.operators.docker import DockerOperator
 from airflow.providers.standard.operators.bash import BashOperator
 from airflow.providers.standard.operators.python import ShortCircuitOperator
-from docker.types import Mount
 
 ENV_ID = os.environ.get("SYSTEM_TESTS_ENV_ID")
 DAG_ID = "docker_sample_copy_data"
@@ -45,9 +46,9 @@ with models.DAG(
     catchup=False,
     tags=["example", "docker"],
 ) as dag:
-    locate_file_cmd = """
+    locate_file_cmd = f"""
         sleep 10
-        find {{params.source_location}} -type f  -printf "%f\n" | head -1
+        find $LOCATION -type f -printf "%f\\n" | head -1
     """
 
     t_view = BashOperator(
@@ -55,6 +56,7 @@ with models.DAG(
         bash_command=locate_file_cmd,
         do_xcom_push=True,
         params={"source_location": "/your/input_dir/path"},
+        env={"LOCATION": "{{ params.source_location }}"},
         dag=dag,
     )
 

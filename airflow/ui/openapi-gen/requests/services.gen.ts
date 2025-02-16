@@ -199,6 +199,8 @@ import type {
   BulkVariablesResponse,
   ReparseDagFileData,
   ReparseDagFileResponse,
+  GetDagVersionsData,
+  GetDagVersionsResponse,
   GetHealthResponse,
   GetVersionResponse,
   LoginData,
@@ -980,14 +982,16 @@ export class GridService {
    * @param data.dagId
    * @param data.includeUpstream
    * @param data.includeDownstream
-   * @param data.logicalDateGte
-   * @param data.logicalDateLte
    * @param data.root
    * @param data.offset
    * @param data.runType
    * @param data.state
    * @param data.limit
    * @param data.orderBy
+   * @param data.runAfterGte
+   * @param data.runAfterLte
+   * @param data.logicalDateGte
+   * @param data.logicalDateLte
    * @returns GridResponse Successful Response
    * @throws ApiError
    */
@@ -1001,14 +1005,16 @@ export class GridService {
       query: {
         include_upstream: data.includeUpstream,
         include_downstream: data.includeDownstream,
-        logical_date_gte: data.logicalDateGte,
-        logical_date_lte: data.logicalDateLte,
         root: data.root,
         offset: data.offset,
         run_type: data.runType,
         state: data.state,
         limit: data.limit,
         order_by: data.orderBy,
+        run_after_gte: data.runAfterGte,
+        run_after_lte: data.runAfterLte,
+        logical_date_gte: data.logicalDateGte,
+        logical_date_lte: data.logicalDateLte,
       },
       errors: {
         400: "Bad Request",
@@ -1369,6 +1375,8 @@ export class DagRunService {
    * @param data.dagId
    * @param data.limit
    * @param data.offset
+   * @param data.runAfterGte
+   * @param data.runAfterLte
    * @param data.logicalDateGte
    * @param data.logicalDateLte
    * @param data.startDateGte
@@ -1392,6 +1400,8 @@ export class DagRunService {
       query: {
         limit: data.limit,
         offset: data.offset,
+        run_after_gte: data.runAfterGte,
+        run_after_lte: data.runAfterLte,
         logical_date_gte: data.logicalDateGte,
         logical_date_lte: data.logicalDateLte,
         start_date_gte: data.startDateGte,
@@ -3322,6 +3332,48 @@ export class DagParsingService {
       url: "/public/parseDagFile/{file_token}",
       path: {
         file_token: data.fileToken,
+      },
+      errors: {
+        401: "Unauthorized",
+        403: "Forbidden",
+        404: "Not Found",
+        422: "Validation Error",
+      },
+    });
+  }
+}
+
+export class DagVersionService {
+  /**
+   * Get Dag Versions
+   * Get all DAG Versions.
+   *
+   * This endpoint allows specifying `~` as the dag_id to retrieve DAG Versions for all DAGs.
+   * @param data The data for the request.
+   * @param data.dagId
+   * @param data.limit
+   * @param data.offset
+   * @param data.versionNumber
+   * @param data.bundleName
+   * @param data.bundleVersion
+   * @param data.orderBy
+   * @returns DAGVersionCollectionResponse Successful Response
+   * @throws ApiError
+   */
+  public static getDagVersions(data: GetDagVersionsData): CancelablePromise<GetDagVersionsResponse> {
+    return __request(OpenAPI, {
+      method: "GET",
+      url: "/public/dags/{dag_id}/dagVersions",
+      path: {
+        dag_id: data.dagId,
+      },
+      query: {
+        limit: data.limit,
+        offset: data.offset,
+        version_number: data.versionNumber,
+        bundle_name: data.bundleName,
+        bundle_version: data.bundleVersion,
+        order_by: data.orderBy,
       },
       errors: {
         401: "Unauthorized",
